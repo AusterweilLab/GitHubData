@@ -1,5 +1,5 @@
 import re, os, json, math, time
-import requests
+#import requests
 import asyncio
 from aiohttp import ClientSession
 
@@ -12,7 +12,7 @@ from aiohttp import ClientSession
 
 # ------------- Load file, each newline is a json blob -------------
 
-filename = '2017-12-31-5.json'
+filename = '2017-12-31-23.json'
 filepath = os.path.join('urls', filename)
 
 with open(filepath, 'r+') as jfile:
@@ -78,6 +78,10 @@ for n in range(n_chunks):
             resp = await response.read()
             jsonresult = json.loads(resp)
 
+            if jsonresult.get('message'):
+                if re.search('API rate limit exceeded', jsonresult.get('message')):
+                    print("API rate limit exceeded :(")
+
             # Only save if it has files
             if jsonresult.get('files'):
                 strresult = json.dumps(jsonresult) + '\n'
@@ -107,6 +111,7 @@ for n in range(n_chunks):
 
     # sleep one hour before continuing
     time.sleep(3600)
+    print(n)
 
 
 """
