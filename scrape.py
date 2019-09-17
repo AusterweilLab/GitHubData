@@ -20,6 +20,8 @@ files = list(filter(lambda x: re.search('.json$', x), [f for f in listdir('urls'
 
 for file in files:
 
+    t0 = time.time()
+
     print("---------- FILE {} ----------".format(file))
 
     filepath = os.path.join('urls', file)
@@ -125,17 +127,21 @@ for file in files:
         async def fetch(url, session, proxy):
 
             """Fetch a url, using specified ClientSession."""
-            async with session.get(url, proxy='http://' + proxy) as response:
-                resp = await response.read()
-                jsonresult = json.loads(resp)
+            try:
+                async with session.get(url, proxy='http://' + proxy, timeout=5) as response:
+                    resp = await response.read()
+                    jsonresult = json.loads(resp)
 
-                # Only save if it has files
-                if jsonresult.get('files'):
-                    strresult = json.dumps(jsonresult) + '\n'
-                    pushoutf.write(strresult)
-                    return resp
-                else:
-                    return None
+                    # Only save if it has files
+                    if jsonresult.get('files'):
+                        strresult = json.dumps(jsonresult) + '\n'
+                        pushoutf.write(strresult)
+                        return resp
+                    else:
+                        return None
+            except:
+                print("There was an error.")
+                return None
 
 
         async def fetch_all(urls):
@@ -163,6 +169,9 @@ for file in files:
         # sleep one hour before continuing
         #time.sleep(3600)
         print("Finished chunk " + str(n))
+
+    dt = time.time() - t0
+    print(dt)
 
 
     """
