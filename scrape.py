@@ -3,20 +3,25 @@ import requests
 from lxml.html import fromstring
 import asyncio
 from itertools import cycle
-import traceback
-from os import listdir
-from os.path import isfile, join
+import random
 from aiohttp import ClientSession
 
+# Only take the most active repos
+# Register an app to get the 5k requests per hour limit
 # Parallelize the requests
-# Use proxy IP requests
-# About 44k files, each with 30k commits = 13M requests :)
-# Github rate limiting = 5k per hour
+# Run and monitor it running
+# Maybe make several apps
+
+# ------------- Load in all of the files, one at a time, and save the urls to a dict {reportname: [url]} ---------------
+# ------------- Do this for both Push and Pull -------------------------------------------------------------------------
+
+files = list(map(lambda x: x[0], list(map(lambda x: x[2], list(os.walk('urls'))))[1:]))
+
 
 
 # ------------- Load file, each newline is a json blob -------------
 
-files = list(filter(lambda x: re.search('.json$', x), [f for f in listdir('urls') if isfile(join('urls', f))]))
+files = list(map(lambda x: x[0], list(map(lambda x: x[2], list(os.walk('urls'))))[1:]))
 
 for file in files:
 
@@ -24,9 +29,9 @@ for file in files:
 
     print("---------- FILE {} ----------".format(file))
 
-    filepath = os.path.join('urls', file)
+    filepath = os.path.join('urls', file, file)
 
-    with open(filepath, 'r+') as jfile:
+    with open(filepath, 'r+', encoding='utf-8') as jfile:
         content = jfile.read()
         jsonblobs = content.split('\n')
 
@@ -35,24 +40,36 @@ for file in files:
 
     # Only filter out the pull/push events
     pushjsonblobs = list(filter(lambda x: re.search('Push', json.loads(x)['type']), jsonblobs))
-    #pulljsonblobs = list(filter(lambda x: re.search('Pull', json.loads(x)['type']), jsonblobs))
+    pulljsonblobs = list(filter(lambda x: re.search('Pull', json.loads(x)['type']), jsonblobs))
     # types: set(map(lambda x: json.loads(x)['type'], jsonblobs))
 
 
     # ------------- Save file in the same way -------------
 
-    pushoutfile = re.sub('.json', '_push_results.json', file)
-    #pulloutfile = re.sub('.json', '_pull_results.json', file)
+    #pushoutfile = re.sub('.json', '_push_results.json', file)
+    pulloutfile = re.sub('.json', '_pull_urls.json', file)
 
     if not os.path.exists('scraped_data'):
         os.makedirs('scraped_data')
 
-    pushoutfile = os.path.join('scraped_data', pushoutfile)
-    pushoutf = open(pushoutfile, 'a+')
-    #pulloutfile = os.path.join('scraped_data', pulloutfile)
-    #pulloutf = open(pulloutfile, 'a+')
+    #pushoutfile = os.path.join('scraped_data', pushoutfile)
+    #pushoutf = open(pushoutfile, 'a+')  # This way if the script quits, then it can continue where it left off
+    pulloutfile = os.path.join('scraped_data', pulloutfile)
+    pulloutf = open(pulloutfile, 'a+')
 
 
+    # ------------- PULL: Need to go to URLs to get a second url -------------
+
+    pullurls = []
+
+    for i, blob in enumerate(pulljsonblobs):
+
+        blob = json.loads(blob)
+        url = blob['payload']['pull_request']['commits_url']
+        pullurls.append(url)
+
+
+    '''
     # ------------- PUSH: Extract a list of urls to use -------------
 
     pushurls = []
@@ -72,12 +89,14 @@ for file in files:
             url = commit['url']
             pushurls.append(url)
 
-
+    '''
     # ------------- Get a list of IPs to use for proxying ---------------
 
     def get_proxies():
 
-        url = 'https://free-proxy-list.net/'
+        #url = 'https://free-proxy-list.net/'
+        url = 'https://www.sslproxies.org/'
+        # url = 'https://www.socks-proxy.net/'
         response = requests.get(url)
         parser = fromstring(response.text)
         proxies = set()
@@ -93,14 +112,18 @@ for file in files:
         return proxies
 
 
-    def find_proxy(proxy_pool):
+    def find_proxy(proxies, url):
 
         # Find a proxy ip that will work
 
         proxy_found = False
         print("Looking for proxy ip to bash to death...")
+        max_ips = len(proxies)
+        proxy_pool = cycle(proxies)
 
-        while proxy_found == False:
+        tries = 1
+
+        while proxy_found == False and tries != max_ips:
 
             proxy = next(proxy_pool)
 
@@ -111,27 +134,49 @@ for file in files:
                 return proxy
 
             except:
+                tries += 1
                 continue
 
+        else:
+            print("Proxy not found :(")
+            return None
 
-    # ------------- Make parallel requests for each chunk of 5000 -------------
 
-    n_urls = len(pushurls)
-    n_requests = 100  # Let's keep smaller chunks
-    n_chunks = math.ceil(n_urls/n_requests)
+    # ------------- Make parallel requests for each url, each url needs to find a proxy -------------
 
-    for n in range(n_chunks):
+    async def fetch(url, session):
 
-        pushurls_chunk = pushurls[n_requests*n:n_requests*(n+1)]
+        """Fetch a url, using specified ClientSession."""
 
-        async def fetch(url, session, proxy):
+        proxy_success = False
 
-            """Fetch a url, using specified ClientSession."""
+        while proxy_success == False:
+
+            proxies = get_proxies()
+            random.shuffle(list(proxies))
+            proxy = find_proxy(proxies, url)
+
+            if not proxy:
+                return None
+
             try:
                 async with session.get(url, proxy='http://' + proxy, timeout=5) as response:
                     resp = await response.read()
                     jsonresult = json.loads(resp)
 
+                    # PULL
+                    # Skip if there are no commits
+                    if jsonresult == []:
+                        return None
+
+                    # Loop through the commits and get the files
+                    for commit in jsonresult:
+                        url = commit['url']
+                        strresult = json.dumps(url) + '\n'
+                        pulloutf.write(strresult)
+
+                    '''
+                    # PUSH
                     # Only save if it has files
                     if jsonresult.get('files'):
                         strresult = json.dumps(jsonresult) + '\n'
@@ -139,36 +184,32 @@ for file in files:
                         return resp
                     else:
                         return None
+                    '''
+
             except:
-                print("There was an error.")
+                continue
+
+            if not proxy:
                 return None
 
 
-        async def fetch_all(urls):
+    async def fetch_all(urls):
 
-            """Launch requests for all web pages."""
-            tasks = []
+        """Launch requests for all web pages."""
+        tasks = []
 
-            async with ClientSession() as session:
+        async with ClientSession() as session:
 
-                proxies = get_proxies()
-                proxy_pool = cycle(proxies)
-                proxy = find_proxy(proxy_pool)
+            for url in urls:
+                task = asyncio.ensure_future(fetch(url, session))
+                tasks.append(task) # create list of tasks
 
-                for url in urls:
-                    task = asyncio.ensure_future(fetch(url, session, proxy))
-                    tasks.append(task) # create list of tasks
+            _ = await asyncio.gather(*tasks) # gather task responses
 
-                _ = await asyncio.gather(*tasks) # gather task responses
-
-        loop = asyncio.get_event_loop() # event loop
-        future = asyncio.ensure_future(fetch_all(pushurls_chunk)) # tasks to do
-        loop.run_until_complete(future) # loop until done
-        # pushoutf.close()
-
-        # sleep one hour before continuing
-        #time.sleep(3600)
-        print("Finished chunk " + str(n))
+    loop = asyncio.get_event_loop() # event loop
+    future = asyncio.ensure_future(fetch_all(pullurls)) # tasks to do
+    loop.run_until_complete(future) # loop until done
+    # pushoutf.close()
 
     dt = time.time() - t0
     print(dt)
