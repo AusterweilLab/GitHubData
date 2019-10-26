@@ -155,5 +155,15 @@ def make_networks_3():
     return nodesusersfiles_edgesevents_graphs
 
 
+# ------------- NETWORKS 3 -------------
+
+# Nodes are users or repos
+# Edges are a push or a pull event
+# Edges will have attributes
+# Edges will have weights denoting number of times an event for that user-file interaction happened
+# Multigraph, so if it has two edges, then means both push and pull
+# One graph per repo
+
+
 networks3 = make_networks_3()
 networks4 = make_networks_4()
