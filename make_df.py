@@ -1,6 +1,8 @@
 import pickle
 import json
 import re, os
+import networkx as nx
+import pandas as pd
 
 
 def make_base_action_df():
@@ -12,7 +14,7 @@ def make_base_action_df():
     community needs to be a connected component id, get from networks
     '''
 
-    df_dict = {}
+    df_rows = []
 
     files = ['pull_json_files', 'push_json_files']
 
@@ -34,17 +36,65 @@ def make_base_action_df():
                 else:
                     action = 'push'
 
-                df_dict[i] = {
+                df_rows.append({
                     'repo': repo,
                     'user': user,
                     'action': action,
                     'time': time
-                }
+                })
 
     # save to pickle file, need to fill in the community column next
-    with open('scratch_pickles', 'wb') as outfile:
-        pickle.dump(df_dict, outfile)
+    with open('scratch_pickles/df_rows', 'wb') as outfile:
+        pickle.dump(df_rows, outfile)
         outfile.close()
 
 
-make_base_action_df()
+# make this base dict that will be the df for later
+#make_base_action_df()
+
+
+# now need to calculate the community id numbers based on the networks I already made
+# Nodes are users
+# Edges are a repo they worked on together
+
+def get_community_ids():
+
+    # load network2
+    with open('network_pickles/network2', 'rb') as filehandle:
+        network2 = pickle.load(filehandle)
+
+    # this is a list of sets
+    comps = list(nx.connected_components(network2))
+
+    # for each user, what is the comp id?
+    users = list(set([item for sublist in comps for item in sublist]))
+    user_ids = {}
+    for user in users:
+        for i, comp in enumerate(comps):
+            if user in comp:
+                user_ids[user] = i
+
+
+    # for each row, fill in the last value
+
+    # load df rows
+    with open('scratch_pickles/df_rows', 'rb') as filehandle:
+        df_rows = pickle.load(filehandle)
+
+    # make new list of rows
+    df_rows_all = []
+    for row in df_rows:
+        community = user_ids[row['user']]
+        row['community'] = community
+        df_rows_all.append(row)
+
+    # turn into a df
+    df = pd.DataFrame(df_rows_all)
+
+    # save df to pickle
+    with open('final_pickles/df_actions.pkl', 'wb') as outfile:
+        pickle.dump(df, outfile)
+        outfile.close()
+
+
+get_community_ids()
