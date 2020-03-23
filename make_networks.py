@@ -1,6 +1,7 @@
 import networkx as nx
 import json, itertools, re
 import pickle
+import os
 
 # ------------- NETWORK 1 -------------
 
@@ -390,6 +391,11 @@ def make_networks_4():
     print(len(nodesusers_edgesfiles_graphs))
     return nodesusers_edgesfiles_graphs2
 
+
+# Uncomment to make each network!
+
+if not os.path.exists('network_pickles'):
+    os.makedirs('network_pickles')
 
 #network1 = make_network_1()
 #with open('network_pickles/network1', 'wb') as outfile:

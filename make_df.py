@@ -44,6 +44,8 @@ def make_base_action_df():
                 })
 
     # save to pickle file, need to fill in the community column next
+    if not os.path.exists('scratch_pickles'):
+        os.makedirs('scratch_pickles')
     with open('scratch_pickles/df_rows', 'wb') as outfile:
         pickle.dump(df_rows, outfile)
         outfile.close()
@@ -92,7 +94,14 @@ def get_community_ids():
     df = pd.DataFrame(df_rows_all)
 
     # save df to pickle
+    if not os.path.exists('final_pickles'):
+        os.makedirs('final_pickles')
     with open('final_pickles/df_actions.pkl', 'wb') as outfile:
+        pickle.dump(df, outfile)
+        outfile.close()
+
+    # save network communities to pickle
+    with open('final_pickles/components.pkl', 'wb') as outfile:
         pickle.dump(df, outfile)
         outfile.close()
 

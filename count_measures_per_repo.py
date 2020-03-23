@@ -19,5 +19,8 @@ for file in files:
             else:
                 measures[repo] = [type]
 
-with open('measures', 'wb') as filehandle:
+if not os.path.exists('final_pickles'):
+    os.makedirs('final_pickles')
+
+with open('final_pickles/measures', 'wb') as filehandle:
     pickle.dump(measures, filehandle)

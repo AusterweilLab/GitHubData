@@ -1,12 +1,13 @@
 import csv
 import pickle
+import os
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 wanted_repos = []
 
-with open("repos_count.csv", 'r') as file:
+with open("repos_count_scratch/repos_count.csv", 'r') as file:
     reader = csv.reader(file)
     for row in reader:
         if len(row) == 0:
@@ -14,7 +15,10 @@ with open("repos_count.csv", 'r') as file:
         if int(row[1]) > 24:
             wanted_repos.append(row[0])
 
-with open('wanted_repos.data', 'wb') as filehandle:
+if not os.path.exists('final_pickles'):
+    os.makedirs('final_pickles')
+
+with open('final_pickles/wanted_repos.data', 'wb') as filehandle:
     # store the data as binary data stream
     pickle.dump(wanted_repos, filehandle)
 

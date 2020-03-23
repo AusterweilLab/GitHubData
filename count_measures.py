@@ -5,7 +5,7 @@ import pickle
 
 
 # Wanted measures stuff
-with open('wanted_repos.data', 'rb') as filehandle:
+with open('final_pickles/wanted_repos.data', 'rb') as filehandle:
     # read the data as binary data stream
     wanted_repos = pickle.load(filehandle)
 
@@ -29,7 +29,7 @@ remote_images_path = '2015/'
 local_path = '/Temp/'
 
 
-for file in filelist[3889:]:
+for file in filelist:
 
     urls = {}
 
@@ -58,6 +58,9 @@ for file in filelist[3889:]:
         wanted_json = list(filter(lambda x: x['repo']['id'] in map(int, wanted_repos), jsonblobs))
 
     os.remove(file_local)
+
+    if not os.path.exists('wanted_measures'):
+        os.makedirs('wanted_measures')
 
     with open('wanted_measures/wanted_measures' + file + '.data', 'wb') as filehandle:
         pickle.dump(wanted_json, filehandle)

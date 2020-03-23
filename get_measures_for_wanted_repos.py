@@ -4,11 +4,11 @@ import paramiko
 import pickle
 
 # Need to load the pickle that has the ids of the wanted repos, so we can filter out the ones we aren't including
-with open('wanted_repos.data', 'rb') as filehandle:
+with open('final_pickles/wanted_repos.data', 'rb') as filehandle:
     # read the data as binary data stream
     wanted_repos = pickle.load(filehandle)
 
-# Conenct to the server
+# Connect to the server
 hostname = "vader.psych.wisc.edu"
 username = "alyssa"
 password = "Alyssa"
@@ -60,7 +60,9 @@ for file in filelist:
 
     os.remove(file_local)
 
-    # On pickle per file so we can load all the pickles in a different script (so we don't run out of memory)
+    # One pickle per file so we can load all the pickles in a different script (so we don't run out of memory)
+    if not os.path.exists('wanted_measures'):
+        os.makedirs('wanted_measures')
     with open('wanted_measures/wanted_measures' + file + '.data', 'wb') as filehandle:
         pickle.dump(wanted_json, filehandle)
 
