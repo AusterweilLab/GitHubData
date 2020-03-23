@@ -1,8 +1,16 @@
-import re, os, json, math, time
+import re, os, json, time
 import pickle
 import requests
 
 # Github rate limiting = 5k per hour
+# This scraper can be registered as an app through github, which will give you the 5K limiting rate
+# Otherwise the rate limiter is super super slow :(
+
+api_id = 'befb2692dfc5374d6dc8'
+api_pass = '03ae2df64c664d427ac43ed7936862327fd5b583'
+
+
+# Load previous saved pickles
 
 with open('wanted_repos.data', 'rb') as filehandle:
     # read the data as binary data stream
@@ -14,7 +22,8 @@ with open('repos_all.data', 'rb') as filehandle:
 
 wanted_urls = {int(your_key): repos_all[int(your_key)] for your_key in wanted_repos}
 
-# ------------- Save file in the same way -------------
+
+# ------------- When scraping, save the file in the same way it was stored -------------
 
 pushoutfile = "push_json_files.json"
 pulloutfile = "pull_json_files.json"
@@ -36,7 +45,7 @@ for repo in wanted_repos:
 
     for u in all_urls:
 
-        url = u[0] + '?client_id=befb2692dfc5374d6dc8&client_secret=03ae2df64c664d427ac43ed7936862327fd5b583'
+        url = u[0] + '?client_id=' + api_id + '&client_secret=' + api_pass
 
         r = requests.get(url)
         jsonresult = json.loads(r.text)

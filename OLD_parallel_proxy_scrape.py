@@ -12,6 +12,12 @@ from aiohttp import ClientSession
 # Run and monitor it running
 # Maybe make several apps
 
+
+# XXXXXXXXXXXXXX DEPRICATED XXXXXXXXXXXXXXXXXXXXXX
+
+
+
+
 # ------------- Load in all of the files, one at a time, and save the urls to a dict {reportname: [url]} ---------------
 # ------------- Do this for both Push and Pull -------------------------------------------------------------------------
 
