@@ -8,9 +8,9 @@ Uses repos_count_scratch/urlfile and repos_count_scratch/urlfile2
 Makes repos_count_scratch/repos_count.csv and repos_count_scratch/repos_all.data
 
 scrape_wanted_repos.py:
-Counts the number of repos
-Uses repos_count_scratch/urlfile and repos_count_scratch/urlfile2
-Makes repos_count_scratch/repos_count.csv and repos_count_scratch/repos_all.data
+Gets the data from github
+Uses repos_count_scratch/repos_count.csv and repos_count_scratch/repos_all.data
+Makes scraped_data/push_json_files.json and scraped_data/pull_json_files.json
 
 filter_wanted_repos.py:
 Filter out the wanted repos only, just make a list of them to filter out of the data

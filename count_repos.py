@@ -5,7 +5,7 @@ repos_dict = {}
 
 with open('repos_count_scratch/urlfile', 'r+') as file:
     data = file.read()
-    repos = data.split("}{")[:100]
+    repos = data.split("}{")
     stop = len(repos)
     for i, repo in enumerate(repos):
         if i == 0:
@@ -28,7 +28,7 @@ repos = 0
 
 with open('repos_count_scratch/urlfile2', 'r+') as file:
     data = file.read()
-    repos = data.split("}{")[:100]
+    repos = data.split("}{")
     stop = len(repos)
     for i, repo in enumerate(repos):
         if i == 0:

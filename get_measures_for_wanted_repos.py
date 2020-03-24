@@ -56,6 +56,11 @@ for file in filelist:
 
         # "measures of success"
         jsonblobs = list(filter(lambda x: re.search('Fork', x['type']) or re.search('Watch', x['type']) or re.search('Issue', x['type']), jrows))
+
+        # Get events from all actions in this list
+        # ['PushEvent','DeleteEvent','CreateEvent','PullRequestEvent','IssuesEvent','ForkEvent',
+        #            'IssueCommentEvent','WatchEvent','CommitCommentEvent','PullRequestReviewCommentEvent']
+
         wanted_json = list(filter(lambda x: x['repo']['id'] in map(int, wanted_repos), jsonblobs))
 
     os.remove(file_local)

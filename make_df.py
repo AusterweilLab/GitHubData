@@ -12,6 +12,9 @@ def make_base_action_df():
     Just push and pull for now
     repo, user, action, t, community
     community needs to be a connected component id, get from networks
+
+    ['PushEvent','DeleteEvent','CreateEvent','PullRequestEvent','IssuesEvent','ForkEvent',
+           'IssueCommentEvent','WatchEvent','CommitCommentEvent','PullRequestReviewCommentEvent']
     '''
 
     df_rows = []

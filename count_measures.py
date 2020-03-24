@@ -12,7 +12,7 @@ with open('final_pickles/wanted_repos.data', 'rb') as filehandle:
 hostname = "vader.psych.wisc.edu"
 username = "alyssa"
 password = "Alyssa"
-port = 1202
+port = 22
 
 client = paramiko.SSHClient()
 client.load_system_host_keys()
@@ -54,7 +54,20 @@ for file in filelist:
                 continue
 
         # "measures of success"
-        jsonblobs = list(filter(lambda x: re.search('Fork', x['type']) or re.search('Watch', x['type']) or re.search('Issue', x['type']), jrows))
+        jsonblobs = list(filter(lambda x:
+                                re.search('PushEvent', x['type']) or
+                                re.search('DeleteEvent', x['type']) or
+                                re.search('CreateEvent', x['type']) or
+                                re.search('PullRequestEvent', x['type']) or
+                                re.search('IssuesEvent', x['type']) or
+                                re.search('ForkEvent', x['type']) or
+                                re.search('IssueCommentEvent', x['type']) or
+                                re.search('WatchEvent', x['type']) or
+                                re.search('CommitCommentEvent', x['type']) or
+                                re.search('PullRequestReviewCommentEvent', x['type']),
+                                jrows))
+
+        #jsonblobs = list(filter(lambda x: re.search('Fork', x['type']) or re.search('Watch', x['type']) or re.search('Issue', x['type']), jrows))
         wanted_json = list(filter(lambda x: x['repo']['id'] in map(int, wanted_repos), jsonblobs))
 
     os.remove(file_local)
